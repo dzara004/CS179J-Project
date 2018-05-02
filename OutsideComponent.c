@@ -65,7 +65,7 @@ void Tick() {
 		if (i == 18 && button == 0x02) {
 			button = 0x01;
 			i = 0;
-		} else if (i == 0 && button == 0x01) {
+		} else if (i == 18 && button == 0x01) {
 			button = 0x02;
 			i = 0;
 		}
