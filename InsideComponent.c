@@ -2,6 +2,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/delay.h>
+#include <util/delay.h>
 
 //Libraries given in CS120B
 #include "lcd.h"
@@ -17,7 +18,7 @@ int main(void)
 
 	initUSART(0);
 	LCD_init();
-	TimerSet(100);
+	TimerSet(300);
 	TimerOn();
 	
 	unsigned char distance1 = 0x00;
@@ -41,50 +42,60 @@ int main(void)
 				USART_Flush(0);
 			}
 			itoa(distance1, display1, 10);
-			LCD_ClearScreen();
-			LCD_DisplayString(1, display1);
+			//LCD_ClearScreen();
+			//LCD_DisplayString(1, "Distance 1 (in):");
+			//LCD_DisplayString(17, display1);
 		} 
-		//else if (pick == 1) {
-			//if(USART_HasReceived(0)){
-				//angle1 = USART_Receive(0);
-				//USART_Flush(0);
-			//}
-			//LCD_ClearScreen();
-			//ltoa(distance1, display1, 10);
-			//itoa(angle1, display2, 10);
-			//LCD_DisplayString(1, "Sensor1(in,deg):");
+		else if (pick == 1) {
+			if(USART_HasReceived(0)){
+				angle1 = USART_Receive(0);
+				USART_Flush(0);
+			}
+			LCD_ClearScreen();
+			itoa(distance1, display1, 10);
+			itoa(angle1, display2, 10);
+			LCD_DisplayString(1, "Sensor1(in,deg):");
 			//if (distance1 < 10) {
-				//LCD_DisplayString(17, "!!!");
+				//LCD_DisplayString(22, "!!!");
 			//} else {
-				//LCD_DisplayString(17, display1);
+				LCD_DisplayString(22, display1);
 			//}
-			//LCD_DisplayString(22, angle1);
-		//} else if (pick == 2) {
-			//if(USART_HasReceived(0)){
-				//distance2 = USART_Receive(0);
-				//USART_Flush(0);
-			//}
-		//} else if (pick == 3) {
-			//if(USART_HasReceived(0)){
-				//angle2 = USART_Receive(0);
-				//USART_Flush(0);
-			//}
-			//LCD_ClearScreen();
-			//ltoa(distance2, display1, 10);
-			//itoa(angle2, display2, 10);
-			//LCD_DisplayString(1, "Sensor2(in,deg):");
-			//if (distance2 < 10) {
-				//LCD_DisplayString(17, "!!!");
-			//} else {
-				//LCD_DisplayString(17, display1);
-			//}
-			//LCD_DisplayString(22, angle2);
-		//}
+			LCD_DisplayString(17, display2);
+			_delay_ms(5000);
+		} 
 		
-		//++pick;
-		//if (pick == 4) {
-			//pick = 0;
-		//}
+		if (pick == 2) {
+			if(USART_HasReceived(0)){
+				distance2 = USART_Receive(0);
+				USART_Flush(0);
+			}
+			itoa(distance2, display1, 10);
+			//LCD_ClearScreen();
+			//LCD_DisplayString(1, "Distance 1 (in):");
+			//LCD_DisplayString(17, display1);
+		}
+		else if (pick == 3) {
+			if(USART_HasReceived(0)){
+				angle2 = USART_Receive(0);
+				USART_Flush(0);
+			}
+			LCD_ClearScreen();
+			itoa(distance2, display1, 10);
+			itoa(angle2, display2, 10);
+			LCD_DisplayString(1, "Sensor2(in,deg):");
+			//if (distance2 < 10) {
+				//LCD_DisplayString(22, "!!!");
+			//} else {
+				LCD_DisplayString(22, display1);
+			//}
+			LCD_DisplayString(17, display2);
+			_delay_ms(5000);
+		}
+		
+		++pick;
+		if (pick == 4) {
+			pick = 0;
+		}
 		while (!TimerFlag) {}
 		TimerFlag = 0;
 	}
