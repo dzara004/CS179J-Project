@@ -7,15 +7,17 @@
 #include "lcd.h"
 #include "timer.h"
 #include "bit.h"
+#include "usart_ATmega1284.h"
 
 //Global variables
 unsigned long timer0Counter = 0x00;
 unsigned char timerOn = 0x01;
 unsigned long distance = 0x00;
+unsigned long input = 0x00;
 
 int main(void)
 {
-	DDRA = 0xFF; PORTA = 0x00;	//LCD control lines
+	DDRA = 0x00; PORTA = 0x00;	//Input from other ATmega1284
 	DDRB = 0xFF; PORTB = 0x00;	//LCD data lines
 	DDRC = 0xFF; PORTC = 0x00;  //Testing LED
 	DDRD = 0x10; PORTD = 0x00;	//For Ultrasonic Sensor (ECHO on PD3; TRIG on PD4)
@@ -115,20 +117,33 @@ ISR(INT1_vect) {
 		TIMSK0 |= 1 << TOIE0;		//Enable overflow interrupts
 	}
 	else {
-		PORTC = 0x01;
+		//PORTC = 0x01;				//Testing LED
 		TCCR0B = 0x00;				//Stop timer
 		TIMSK0 = 0x00;				//Disable overflow interrupts 
-		char* test[10];			
+		char* test[10];	
+		char* test2[10];			
 		distance = (timer0Counter * 255) + TCNT0; //Calculate distance
 		distance = distance / 920;				  //Convert to inches (Rough approximation)
-		if (distance <= 60) {					  //'if' case is here to avoid bug of distance being over 1000 inches
+		if (distance <= 60 && distance >= 10) {					  //'if' case is here to avoid bug of distance being over 1000 inches
 			LCD_ClearScreen();
 			ltoa(distance, test, 10);
 			LCD_DisplayString(1, test);		
 		}
-		if (distance < 10) {					  //'if' case is here to see if distance is less than 10 (the inner limit)
+		else if (distance < 10) {					  //'if' case is here to see if distance is less than 10 (the inner limit)
 			LCD_ClearScreen();
-			LCD_DisplayString(17, "Too close!");
+			LCD_DisplayString(6, "Too close!");
+		}
+		
+		//_delay_ms(500);
+		input = PINA;
+		if (input <= 60 && input >= 10) {					  //'if' case is here to avoid bug of distance being over 1000 inches
+			//LCD_ClearScreen();
+			ltoa(input, test2, 10);
+			LCD_DisplayString(17, test2);
+		}
+		else if (input < 10) {					  //'if' case is here to see if distance is less than 10 (the inner limit)
+			//LCD_ClearScreen();
+			LCD_DisplayString(22, "Too close!");
 		}
 	}
 	timer0Counter = 0x00;
