@@ -1,99 +1,105 @@
+//Default libraries
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include "timer.h"
 
-unsigned long numPhases;
-unsigned char stepOut[8] = {0x01, 0x03, 0x02, 0x06, 0x04, 0x0C,0x08,0x09};
-unsigned int maxCnt = 0;
-unsigned int cnt = 0;
+//Global variables
+unsigned long phaseCount;
+unsigned char steps[8] = {0x01, 0x03, 0x02, 0x06, 0x04, 0x0C,0x08,0x09};
+unsigned int counter;
+unsigned char forwardCount;
+unsigned char backwardCount;
+unsigned char rotate;
+unsigned char i;
 
-unsigned char forCnt = 0;
-unsigned char bckCnt = 7;
-unsigned char clockwise = 0x01;
+//States for stepper motor
+enum Motor{wait, rotate} motor;
+enum Rotation {clockwise, counterClockwise} route;
 
-enum buttonStates{buttonWait,buttonPush,buttonGo} buttonState;
-enum Direction {forward, backward} direction;
-unsigned char button = 0x02;
-unsigned char i = 0x00;
-
-void Tick() {
-	// Transitions for button pushed
-	switch(buttonState) {
-		case buttonWait:
-			if(!button){
-				buttonState = buttonWait;
-			}
-			else if (button == 0x02) {
-				direction = forward;
-				numPhases = (30 / 5.625) * 64;
-				maxCnt = numPhases;
-				buttonState = buttonGo;
-				forCnt = 0;
-				bckCnt = 7;
-				cnt = 0;
+//State machine code for stepper motor
+void MotorTick() {
+	
+	//Transitions
+	switch(motor) {
+		case wait:
+			if (rotate == 0x02) {
+				route = clockwise;
+				phaseCount = (30 / 5.625) * 64;	//Rotate 30 degrees clockwise
+				motor = rotate;
+				forwardCount = 0;
+				backwardCount = 7;
+				counter = 0;
 				++i;
-			} else if (button == 0x01) {
-				direction = backward;
-				numPhases = (30 / 5.625) * 64;
-				maxCnt = numPhases;
-				buttonState = buttonGo;
-				forCnt = 0;
-				bckCnt = 7;
-				cnt = 0;
+			} else if (rotate == 0x01) {
+				route = counterClockwise;
+				phaseCount = (30 / 5.625) * 64;	//Rotate 30 degrees counter clockwise
+				motor = rotate;
+				forwardCount = 0;
+				backwardCount = 7;
+				counter = 0;
 				++i;
 			}
 			break;
-		case buttonGo:
-			if(cnt < maxCnt )
-				buttonState = buttonGo;
+		case rotate:
+			if(counter < phaseCount )
+				motor = rotate;
 			else{
-				buttonState = buttonWait;
+				motor = wait;
 			}
 			break;
 	}
 
 	// Actions
-	switch(buttonState){
-		case buttonWait:
-			if (i == 6 && button == 0x02) {
-				button = 0x01;
+	switch(motor){
+		case wait:
+			if (i == 6 && rotate == 0x02) {
+				rotate = 0x01;
 				i = 0;
-			} else if (i == 6 && button == 0x01) {
-				button = 0x02;
+			} else if (i == 6 && rotate == 0x01) {
+				rotate = 0x02;
 				i = 0;
 			}
 			break;
-		case buttonGo:
-			if(direction == forward){
-				PORTA = stepOut[forCnt];
-				if(forCnt < 7)
-					forCnt++;
+		case rotate:
+			if(route == clockwise){
+				PORTA = steps[forwardCount];	//Perform the stepper motor pattern
+				if(forwardCount < 7)
+					forwardCount++;
 				else
-					forCnt=0;
+					forwardCount=0;
 			}
-			else if(direction == backward){
-				PORTA = stepOut[bckCnt];
-				if(bckCnt > 0)
-					bckCnt--;
+			else if(route == counterClockwise){
+				PORTA = steps[backwardCount];	//Perform the stepper motor pattern
+				if(backwardCount > 0)
+					backwardCount--;
 				else
-					bckCnt=7;
+					backwardCount=7;
 			}
-			cnt++;
+			counter++;
 			break;
 	}
 }
 
 int main(void)
 {
-	DDRA = 0xFF; PORTA = 0x00; // Setting DDRA to output
-    DDRB = 0x00; PORTB = 0xFF; // Setting DDRB to input
-
-	TimerSet(3);
-	TimerOn();
-	buttonState = buttonWait;
+    DDRA = 0xFF; PORTA = 0x00; //Connected to stepper motor
+    
+    //Initializations
+    TimerSet(10);
+    TimerOn();
+    motor = wait;
+    route = clockwise;
+	
+    unsigned long phaseCount = 0x00;
+    unsigned int counter = 0x00;
+    unsigned char forwardCount = 0x00;
+    unsigned char backwardCount = 0x07;
+    unsigned char rotate = 0x01;
+    unsigned char i = 0x00;
+	
     while (1)
     {
-		Tick();
+		MotorTick();
 		while(!TimerFlag) {}
 		TimerFlag = 0;
     }
