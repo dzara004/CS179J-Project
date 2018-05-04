@@ -41,7 +41,7 @@ void MotorTick() {
 			}
 			break;
 		case rotate:
-			if(counter < phaseCount )
+			if (counter < phaseCount )
 				motor = rotate;
 			else{
 				motor = wait;
@@ -50,7 +50,7 @@ void MotorTick() {
 	}
 
 	// Actions
-	switch(motor){
+	switch (motor) {
 		case wait:
 			if (i == 6 && rotate == 0x02) {
 				rotate = 0x01;
@@ -61,19 +61,18 @@ void MotorTick() {
 			}
 			break;
 		case rotate:
-			if(route == clockwise){
+			if (route == clockwise) {
 				PORTA = steps[forwardCount];	//Perform the stepper motor pattern
-				if(forwardCount < 7)
+				if (forwardCount < 7)
 					forwardCount++;
 				else
-					forwardCount=0;
-			}
-			else if(route == counterClockwise){
+					forwardCount = 0;
+			} else if(route == counterClockwise) {
 				PORTA = steps[backwardCount];	//Perform the stepper motor pattern
-				if(backwardCount > 0)
+				if (backwardCount > 0)
 					backwardCount--;
 				else
-					backwardCount=7;
+					backwardCount = 7;
 			}
 			counter++;
 			break;
