@@ -103,13 +103,13 @@ void MotorTick() {
 				if (forwardCount < 7)
 					forwardCount++;
 				else
-					forwardCount=0;
+					forwardCount = 0;
 			} else if (route == counterClockwise) {
 				PORTA = steps[backwardCount];	//Perform the stepper motor pattern
 				if(backwardCount > 0)
 					backwardCount--;
 				else
-					backwardCount=7;
+					backwardCount = 7;
 			}
 			counter++;
 			break;
