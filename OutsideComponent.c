@@ -26,6 +26,7 @@ unsigned long input;
 unsigned char count;
 unsigned char pick;
 
+//Function used to retrieve distance from ultrasonic sensor
 void getDistance() {
 	timerOn = 0x01;
 	_delay_us(10);						  //Wait 10 us
@@ -121,11 +122,19 @@ int main(void)
 	DDRB = 0xFF; PORTB = 0x00;  //LCD data lines
 	DDRC = 0xFF; PORTC = 0x00;  //LCD control lines
 	DDRD = 0x12; PORTD = 0x00;  //For Ultrasonic Sensor (ECHO on PD3; TRIG on PD4)
-
+	
+	//Initializations
 	initUSART(0);
 	LCD_init();
 	TimerSet(3);
 	TimerOn();
+	
+	unsigned long phaseCount = 0x00;
+	unsigned int counter = 0x00;
+	unsigned char forwardCount = 0x00;
+	unsigned char backwardCount = 0x00;
+	unsigned char rotate = 0x01;
+	unsigned char i = 0x00;
 	
 	unsigned long timer0Counter = 0x00;
 	unsigned char timerOn = 0x01;
@@ -192,21 +201,27 @@ ISR(INT1_vect) {
 			pick = USART_Receive(0);
 			USART_Flush(0);
 		}
+		
+		//Send data to other ATmega1284 based on choice
+		//Sends first distance
 		if (pick == 0) {
 			if(USART_IsSendReady(0)){
 				USART_Send(distance, 0);
 				while(!USART_HasTransmitted(0)){}
 			}
+		//Sends first angle
 		} else if (pick == 1) {
 			if(USART_IsSendReady(0)){
 				USART_Send(i * 10, 0);
 				while(!USART_HasTransmitted(0)){}
 			}
+		//Sends second distance
 		} else if (pick == 2) {
 			if(USART_IsSendReady(0)){
 				USART_Send(input, 0);
 				while(!USART_HasTransmitted(0)){}
 			}
+		//Sends second angle
 		} else if (pick == 3) {
 			if(USART_IsSendReady(0)){
 				USART_Send(180 - (i * 10), 0);
