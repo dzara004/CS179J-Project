@@ -15,6 +15,28 @@ unsigned char timerOn = 0x01;
 unsigned long distance = 0x00;
 unsigned long input = 0x00;
 
+//Function used to mainly test ultrasonic sensor
+void getDistance() {
+	timerOn = 0x01;
+	_delay_us(10);						  //Wait 10 us
+	PORTD = 0x10;						  //Set trig HIGH
+	_delay_us(10);						  //Wait 10 us
+	PORTD = 0x00;						  //Set trig LOW
+	_delay_us(10);						  //Set 10 us
+
+	EICRA |= (1 << ISC11) | (1 << ISC10); 			  //Trigger on rising edge of INT1
+	EIMSK |= 1 << INT1;					  //Enable interrupts on INT1
+	_delay_ms(10);
+
+	EIMSK = 0x00;						  //Disable interrupts on INT1
+	EICRA = 0x00;						  //Reset triggering event
+	timerOn = 0x00;						  //Stop timer variable
+	EICRA |= (1 << ISC11) | (0 << ISC10); 			  //Trigger on falling edge of INT1
+	//EIFR |= 1 << INTF1;				  	  //Reset flag as required by datasheet
+	EIMSK |= 1 << INT1;					  //Enable interrupts on INT1 again
+	//_delay_ms(10);					  //Delay time to "catch" falling edge, else falling edge doesn't get picked up
+}
+
 int main(void)
 {
 	DDRA = 0x00; PORTA = 0x00;	//Input coming from other ATmega1284 (the other distance)
@@ -86,25 +108,8 @@ int main(void)
 	/* End Ultrasonic sensor code */
 
 	while (1) {
-		timerOn = 0x01;
-		_delay_us(10);						  //Wait 10 us
-		PORTD = 0x10;						  //Set trig HIGH
-		_delay_us(10);						  //Wait 10 us
-		PORTD = 0x00;						  //Set trig LOW
-		_delay_us(10);						  //Set 10 us
-		
-		EICRA |= (1 << ISC11) | (1 << ISC10); 			  //Trigger on rising edge of INT1
-		EIMSK |= 1 << INT1;					  //Enable interrupts on INT1
-		_delay_ms(10);
-		
-		EIMSK = 0x00;						  //Disable interrupts on INT1
-		EICRA = 0x00;						  //Reset triggering event
-		timerOn = 0x00;						  //Stop timer variable
-		EICRA |= (1 << ISC11) | (0 << ISC10); 			  //Trigger on falling edge of INT1
-		//EIFR |= 1 << INTF1;				  	  //Reset flag as required by datasheet
-		EIMSK |= 1 << INT1;					  //Enable interrupts on INT1 again
-		//_delay_ms(10);					  //Delay time to "catch" falling edge, else falling edge doesn't get picked up
-		
+		//Only used to test ultrasonic sensor
+		getDistance();
 		while (!TimerFlag) {}
 		TimerFlag = 0;
 	}
@@ -134,15 +139,12 @@ ISR(INT1_vect) {
 			LCD_DisplayString(6, "Too close!");
 		}
 		
-		//_delay_ms(500);
 		input = PINA;
 		if (input <= 60 && input >= 10) {			  //'if' case is here to avoid bug of distance being over 1000 inches
-			//LCD_ClearScreen();
 			ltoa(input, test2, 10);
 			LCD_DisplayString(17, test2);
 		}
 		else if (input < 10) {					  //'if' case is here to see if distance is less than 10 (the inner limit)
-			//LCD_ClearScreen();
 			LCD_DisplayString(22, "Too close!");
 		}
 	}
@@ -167,6 +169,6 @@ ISR(TIMER0_OVF_vect) {
 	LCD_ClearScreen();
 	LCD_DisplayString(1, test);
 	TIMSK0 = 0x00;						//Disable overflow interrupts
-	cli();								//Disable global interrupts
+	cli();							//Disable global interrupts
 	/* End test */
 }
