@@ -32,59 +32,77 @@ unsigned char button = 0x02;
 unsigned char i = 0x00;
 
 //States for bluetooth communication
-enum BTStates{wait, distance1, angle1, distance2, angle2} BTState;
-unsigned char select = 0x00;
+enum BTStates{wait, readyD1, sendD1, readyA1, sendA1, readyD2, sendD2, readyA2, sendA2} BTState;
+unsigned char select = 101;
 
 //Bluetooth communication state machine
 void BTTick() {
 	// Transitions
 	switch(BTState) {
 		case wait:
-			if (select == 0) {
-				BTState = wait;
-			} else if (select == 1) {
-				BTState = distance1;
-			} else if (select == 2) {
-				BTState = angle1;
-			} else if (select == 3) {
-				BTState = distance2;
-			} else if (select == 4) {
-				BTState = angle2;
+			if (select == 101) {
+				BTState = readyD1;
+			} else if (select == 102) {
+				BTState = readyA1;
+			} else if (select == 103) {
+				BTState = readyD2;
+			} else if (select == 104) {
+				BTState = readyA2;
 			}
 			break;
-		case distance1:
-			BTState = wait;
-			select = 0;
+		case readyD1:
+			BTState = sendD1;
 			break;
-		case angle1:
+		case sendD1:
 			BTState = wait;
-			select  = 0;
 			break;
-		case distance2:
-			BTState = wait;
-			select = 0;
+		case readyA1:
+			BTState = sendA1;
 			break;
-		case angle2:
+		case sendA1:
 			BTState = wait;
-			select = 0;
+			break;
+		case readyD2:
+			BTState = sendD2;
+			break;
+		case sendD2:
+			BTState = wait;
+			break;
+		case readyA2:
+			BTState = sendA2;
+			break;
+		case sendA2:
+			BTState = wait;
 			break;
 	}
 
 	// Actions
 	switch(BTState){
 		case wait:
-			if (USART_HasReceived(0)) {
-				select = USART_Receive(0);
-				USART_Flush(0);
+			++select;
+			if (select == 105) {
+				select = 101;
 			}
 			break;
-		case distance1:
+		case readyD1:
+			if (USART_IsSendReady(0)) {
+				USART_Send(101, 0);
+				while (!(USART_HasTransmitted(0))) {}
+			}
+			break;
+		case sendD1:
 			if (USART_IsSendReady(0)) {
 				USART_Send(distance, 0);
 				while (!(USART_HasTransmitted(0))) {}
 			}
 			break;
-		case angle1:
+		case readyA1:
+			if (USART_IsSendReady(0)) {
+				USART_Send(102, 0);
+				while (!(USART_HasTransmitted(0))) {}
+			}
+			break;
+		case sendA1:
 			if (USART_IsSendReady(0)) {
 				if (direction == forward) {
 					USART_Send(i * 10, 0);
@@ -94,15 +112,32 @@ void BTTick() {
 				while (!USART_HasTransmitted(0)) {}
 			}
 			break;
-		case distance2:
+		case readyD2:
+			if (USART_IsSendReady(0)) {
+				USART_Send(103, 0);
+				while (!(USART_HasTransmitted(0))) {}
+			}
+			break;
+		case sendD2:
+			PORTB = 0x01;
+			_delay_ms(1000);
+			PORTB = 0x00;
+			_delay_ms(1000);
+			input = PINA;
 			if (USART_IsSendReady(0)) {
 				USART_Send(input, 0);
 				while (!(USART_HasTransmitted(0))) {}
 			}
 			break;
-		case angle2:
+		case readyA2:
 			if (USART_IsSendReady(0)) {
-				if (direction == forward) {
+				USART_Send(104, 0);
+				while (!(USART_HasTransmitted(0))) {}
+			}
+			break;
+		case sendA2:
+			if (USART_IsSendReady(0)) {
+				if (direction == backward) {
 					USART_Send(180 - (i * 10), 0);
 				} else {
 					USART_Send(i * 10, 0);
@@ -181,6 +216,26 @@ void MotorTick() {
 	}
 }
 
+void sendData() {
+	PORTB = 0x01;
+	_delay_ms(1000);
+	PORTB = 0x00;
+	_delay_ms(1000);
+	if (USART_IsSendReady(0) && distance <= 60) {
+		USART_Send(distance, 0);
+		while(!USART_HasTransmitted(0));
+	}
+	
+	if (USART_IsSendReady(0)) {
+		if (direction == forward) {
+			USART_Send(i * 10, 0);
+		} else {
+			USART_Send(180 - (i * 10), 0);
+		}
+		while (!USART_HasTransmitted(0)) {}
+	}
+}
+
 //Function used to retrieve distance
 void getDistance() {
 	timerOn = 0x01;
@@ -220,7 +275,8 @@ int main(void)
 	BTState = wait;
 	
 	//Counting variable for timing the 'tick' functions
-	unsigned char count = 0;
+	unsigned char motorCount = 0;
+	unsigned char btCount = 0;
 	
 	/* Testing LED (Put it in places of the code where you think the error lies)
 	PORTB = 0x01;
@@ -228,16 +284,20 @@ int main(void)
 	PORTB = 0x00;
 	_delay_ms(1000); 
 	*/
-
+	unsigned char test = 0;	
+	
 	while (1) {
 		//Every ~250ms
-		if (count == 83) {
+		if (motorCount == 83) {
 			BTTick();
 			getDistance();
-			count = 0;
+			//sendData();
+			motorCount = 0;
 		} else {
+			//sendData();
 			MotorTick();
-			++count;
+			++motorCount;
+			++btCount;
 		}
 		
 		while (!TimerFlag) {}
