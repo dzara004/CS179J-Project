@@ -99,10 +99,10 @@ void BTTick() {
 			LCD_DisplayString(17, data);
 			break;
 		case angle1:
-		PORTC = 0x01;
-		_delay_ms(1000);
-		PORTC = 0x00;
-		_delay_ms(1000);
+		//PORTC = 0x01;
+		//_delay_ms(1000);
+		//PORTC = 0x00;
+		//_delay_ms(1000);
 			if (USART_HasReceived(0)) {
 				a1 = USART_Receive(0);
 				USART_Flush(0);
@@ -141,10 +141,10 @@ void BTTick() {
 }
 
 void receiveData() {
-	PORTC = 0x01;
-	_delay_ms(1000);
-	PORTC = 0x00;
-	_delay_ms(1000);
+	//PORTC = 0x01;
+	//_delay_ms(1000);
+	//PORTC = 0x00;
+	//_delay_ms(1000);
 	
 	if (USART_HasReceived(0)) {
 		d1 = USART_Receive(0);
@@ -171,7 +171,7 @@ int main(void)
 {
 	DDRA = 0xFF; PORTA = 0x00;
 	DDRC = 0xFF; PORTC = 0x00;
-	DDRD = 0x02; PORTD = 0x00;	//For Ultrasonic Sensor (ECHO on PD3; TRIG on PD4)
+	DDRD = 0xF2; PORTD = 0x00;	//For Ultrasonic Sensor (ECHO on PD3; TRIG on PD4)
 
 	//Initializations
 	LCD_init();
