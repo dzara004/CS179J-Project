@@ -108,10 +108,12 @@ void BTTick() {
 				USART_Flush(0);
 				select = 105;
 			}
-			itoa(a1, data, 10);
-			LCD_ClearScreen();
-			LCD_DisplayString(1, "Angle 1:");
-			LCD_DisplayString(17, data);
+			if ((a1 != 104) && (a1 != d2)) {
+				itoa(a1, data, 10);
+				LCD_ClearScreen();
+				LCD_DisplayString(1, "Angle 1:");
+				LCD_DisplayString(17, data);
+			}
 			break;
 		case distance2:
 			if (USART_HasReceived(0)) {
@@ -175,8 +177,8 @@ int main(void)
 	LCD_init();
 	LCD_ClearScreen();
 	initUSART(0);
-	//550 okay (only bug is in angle 1)
-	TimerSet(525);
+	//550, 525, 540 okay (only bug is in angle 1)
+	TimerSet(540);
 	TimerOn();
 	
 	BTState = wait;
