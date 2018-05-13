@@ -119,10 +119,10 @@ void BTTick() {
 			}
 			break;
 		case sendD2:
-			PORTB = 0x01;
-			_delay_ms(1000);
-			PORTB = 0x00;
-			_delay_ms(1000);
+			//PORTB = 0x01;
+			//_delay_ms(1000);
+			//PORTB = 0x00;
+			//_delay_ms(1000);
 			input = PINA;
 			if (USART_IsSendReady(0)) {
 				USART_Send(input, 0);
