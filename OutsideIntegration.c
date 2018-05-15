@@ -3,7 +3,7 @@
 #include <avr/interrupt.h>
 #include <avr/delay.h>
 
-//Libraries given in CS120B
+//Libraries given in CS120B/CS122A
 #include "lcd.h"
 #include "timer.h"
 #include "bit.h"
