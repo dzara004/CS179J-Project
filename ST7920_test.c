@@ -9,6 +9,69 @@
 #include <util/delay.h>
 #include <math.h>
 
+/*Functions to test functions*/
+void faceTest() {
+	//Left eye
+	setPixel(12, 17, 0x18);
+	_delay_ms(100);
+	setPixel(12, 16, 0x3C);
+	_delay_ms(100);
+	setPixel(12, 15, 0xFF);
+	_delay_ms(100);
+	setPixel(12, 14, 0x3C);
+	_delay_ms(100);
+	setPixel(12, 13, 0x18);
+	_delay_ms(100);
+	
+	//Right eye
+	setPixel(10, 17, 0x18);
+	_delay_ms(100);
+	setPixel(10, 16, 0x3C);
+	_delay_ms(100);
+	setPixel(10, 15, 0xFF);
+	_delay_ms(100);
+	setPixel(10, 14, 0x3C);
+	_delay_ms(100);
+	setPixel(10, 13, 0x18);
+	_delay_ms(100);
+	
+	//Mouth
+	setPixel(3, 16, 0x81);
+	_delay_ms(100);
+	setPixel(3, 15, 0xFF);
+	_delay_ms(100);
+	
+	//Nose
+	setPixel(11, 0, 0x66);
+	_delay_ms(100);
+}
+
+void pointsTest() {
+	unsigned char leftDistance1 = 15;
+	double leftAngle1 = 150 * (M_PI / 180);
+	plotLeft(leftDistance1, leftAngle1);
+	
+	_delay_ms(1000);
+	
+	unsigned char rightDistance1 = 31;
+	double rightAngle1 = 40 * (M_PI / 180);
+	plotRight(rightDistance1, rightAngle1);
+	
+	_delay_ms(1000);
+	
+	unsigned char leftDistance2 = 9;
+	double leftAngle2 = 10 * (M_PI / 180);
+	plotLeft(leftDistance2, leftAngle2);
+	
+	_delay_ms(1000);
+	
+	unsigned char rightDistance2 = 58;
+	double rightAngle2 = 0 * (M_PI / 180);
+	plotRight(rightDistance2, rightAngle2);
+	
+	_delay_ms(1000);
+}
+
 /*Note: Custom LCD functions will be placed into its own library after further testing*/
 
 void initGraphic(void) {
@@ -150,6 +213,140 @@ void drawAxes() {
 	}
 }
 
+void plotLeft(unsigned char distance, double angle) {
+	//Initializations
+	unsigned char xPos = 0x00;
+	unsigned char yPos = 0x00;
+	unsigned long pixel = 0x0000;
+	
+	//Calculate X coordinate and pixel
+	double x = fabs(distance * cos(angle));
+	if (x >= 45.0) {
+		xPos = 0;
+		if (x >= 55.0) {
+			pixel = 0xE000;
+		} else if (x >= 50.0) {
+			pixel = 0x0380;
+		} else {
+			pixel = 0x000E;
+		}
+	} else if (x >= 30.0) {
+		xPos = 1;
+		if (x >= 40.0) {
+			pixel = 0xE000;
+		} else if (x >= 35.0) {
+			pixel = 0x0380;
+		} else {
+			pixel = 0x000E;
+		}
+	} else if (x >= 15.0) {
+		xPos = 2;
+		if (x >= 25.0) {
+			pixel = 0xE000;
+		} else if (x >= 20.0) {
+			pixel = 0x0380;
+		} else {
+			pixel = 0x000E;
+		}
+	} else {
+		xPos = 3;
+		if (x >= 10.0) {
+			pixel = 0xE000;
+		} else if (x >= 5.0) {
+			pixel = 0x0380;
+		} else {
+			pixel = 0x000E;
+		}
+	}
+	
+	//Calculate Y coordinate
+	double y = distance * sin(angle);
+	if (y > 31.0) {
+		yPos = 31;
+	} else {
+		yPos = round(y);
+	}
+	
+	//Plot point
+	double degrees = angle * (180 / M_PI);
+	if (degrees <= 90.0) {
+		setPixel(xPos, 32 - (yPos - 1), pixel);
+		setPixel(xPos, 32 - yPos, pixel);
+		setPixel(xPos, 32 - (yPos + 1), pixel);
+	} else {
+		setPixel(xPos + 8, yPos - 1, pixel);
+		setPixel(xPos + 8, yPos, pixel);
+		setPixel(xPos + 8, yPos + 1, pixel);
+	}
+}
+
+void plotRight(unsigned char distance, double angle) {
+	//Initializations
+	unsigned char xPos = 0x00;
+	unsigned char yPos = 0x00;
+	unsigned long pixel = 0x0000;
+	
+	//Calculate X coordinate and pixel
+	double x = fabs(distance * cos(angle));
+	if (x >= 45.0) {
+		xPos = 4;
+		if (x >= 55.0) {
+			pixel = 0xE000;
+		} else if (x >= 50.0) {
+			pixel = 0x0380;
+		} else {
+			pixel = 0x000E;
+		}
+	} else if (x >= 30.0) {
+		xPos = 5;
+		if (x >= 40.0) {
+			pixel = 0xE000;
+		} else if (x >= 35.0) {
+			pixel = 0x0380;
+		} else {
+			pixel = 0x000E;
+		}
+	} else if (x >= 15.0) {
+		xPos = 6;
+		if (x >= 25.0) {
+			pixel = 0xE000;
+		} else if (x >= 20.0) {
+			pixel = 0x0380;
+		} else {
+			pixel = 0x000E;
+		}
+	} else {
+		xPos = 7;
+		if (x >= 10.0) {
+			pixel = 0xE000;
+		} else if (x >= 5.0) {
+			pixel = 0x0380;
+		} else {
+			pixel = 0x000E;
+		}
+	}
+	
+	//Calculate Y coordinate
+	double y = distance * sin(angle);
+	if (y > 31.0) {
+		yPos = 31;
+	} else {
+		yPos = round(y);
+	}
+	
+	//Plot point
+	double degrees = angle * (180 / M_PI);
+	if (degrees <= 90.0) {
+		setPixel(xPos, 32 - (yPos - 1), pixel);
+		setPixel(xPos, 32 - yPos, pixel);
+		setPixel(xPos, 32 - (yPos + 1), pixel);
+	} else {
+		setPixel(xPos + 8, yPos - 1, pixel);
+		setPixel(xPos + 8, yPos, pixel);
+		setPixel(xPos + 8, yPos + 1, pixel);
+	}
+}
+
 int main(void)
 {
 	DDRA = 0xFF; PORTA = 0x00;	//Set data port to output, initialize to 0
@@ -161,38 +358,6 @@ int main(void)
 	initGraphic();	//Initialize as graphic display
 	clearScreen();	//Clears LCD screen
 	drawAxes();		//Draw axes
-	
-	//setPixel(7, 13, 0x03C0);
-	//setPixel(7, 12, 0x03C0);
-	//setPixel(7, 11, 0x03C0);
-	//setPixel(7, 10, 0x03C0);
-	
-	//faceTest();
-	
-	/*Sample code for plotting
-	double x = 3.14;
-	unsigned char y = 55;
-	if (y > 31) {
-		setPixel(round(x) + 8, y - 32, 0x0FF0);
-	}
-	setPixel(4, 55, 0x0FF0);
-	*/
-	
-	/*Testing code for integration
-	double x = cos(30);
-	x = ceil(x);
-	int xPos = x;
-	*/
-	
-	/*Testing to see if syntax if correct
-	PORTD |= 1 << PD7;
-	_delay_ms(1000);
-	PORTD &= 0 << PD7;
-	_delay_ms(1000);
-	PORTD |= 1 << PD7;
-	_delay_ms(1000);
-	PORTD &= 0 << PD7;
-	*/
 	
 	/*Testing code
 	PORTD = 0x80;
