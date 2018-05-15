@@ -16,20 +16,17 @@ unsigned long distance = 0x00;
 unsigned long input = 0x00;
 
 //Global variables for stepper motor
-unsigned long numPhases;
-unsigned char stepOut[8] = {0x01, 0x03, 0x02, 0x06, 0x04, 0x0C,0x08,0x09};
-unsigned int maxCnt = 0;
-unsigned int cnt = 0;
-
-unsigned char forCnt = 0;
-unsigned char bckCnt = 7;
-unsigned char clockwise = 0x01;
+unsigned long phaseCount;
+unsigned char steps[8] = {0x01, 0x03, 0x02, 0x06, 0x04, 0x0C,0x08,0x09};
+unsigned int counter;
+unsigned char forwardCount;
+unsigned char backwardCount;
+unsigned char rotate;
+unsigned char i;
 
 //States for stepper motor
-enum buttonStates{buttonWait,buttonPush,buttonGo} buttonState;
-enum Direction {forward, backward} direction;
-unsigned char button = 0x02;
-unsigned char i = 0x00;
+enum Motor{ready, rotate} motor;
+enum Rotation {clockwise, counterClockwise} route;
 
 //States for bluetooth communication
 enum BTStates{wait, readyD1, sendD1, readyA1, sendA1, readyD2, sendD2, readyA2, sendA2} BTState;
@@ -104,7 +101,7 @@ void BTTick() {
 			break;
 		case sendA1:
 			if (USART_IsSendReady(0)) {
-				if (direction == forward) {
+				if (direction == clockwise) {
 					USART_Send(i * 10, 0);
 				} else {
 					USART_Send(180 - (i * 10), 0);
@@ -137,7 +134,7 @@ void BTTick() {
 			break;
 		case sendA2:
 			if (USART_IsSendReady(0)) {
-				if (direction == backward) {
+				if (direction == counterClockwise) {
 					USART_Send(180 - (i * 10), 0);
 				} else {
 					USART_Send(i * 10, 0);
@@ -148,73 +145,69 @@ void BTTick() {
 	}
 }
 
-//Stepper motor state machine
+//State machine code for stepper motor
 void MotorTick() {
-	// Transitions for button pushed
-	switch(buttonState) {
-		case buttonWait:
-		if(!button){
-			buttonState = buttonWait;
-		}
-		else if (button == 0x02) {
-			direction = forward;
-			numPhases = (10 / 5.625) * 64;
-			maxCnt = numPhases;
-			buttonState = buttonGo;
-			forCnt = 0;
-			bckCnt = 7;
-			cnt = 0;
-			++i;
-			} else if (button == 0x01) {
-			direction = backward;
-			numPhases = (10 / 5.625) * 64;
-			maxCnt = numPhases;
-			buttonState = buttonGo;
-			forCnt = 0;
-			bckCnt = 7;
-			cnt = 0;
-			++i;
-		}
-		break;
-		case buttonGo:
-		if(cnt < maxCnt )
-		buttonState = buttonGo;
-		else{
-			buttonState = buttonWait;
-		}
-		break;
+	//Transitions
+	switch(motor) {
+		case ready:
+			if (rotate == 0x02) {
+				route = clockwise;
+				phaseCount = (30 / 5.625) * 64;	//Rotate 30 degrees clockwise
+				motor = rotate;
+				forwardCount = 0;
+				backwardCount = 7;
+				counter = 0;
+				++i;
+			} else if (rotate == 0x01) {
+				route = counterClockwise;
+				phaseCount = (30 / 5.625) * 64;	//Rotate 30 degrees counter clockwise
+				motor = rotate;
+				forwardCount = 0;
+				backwardCount = 7;
+				counter = 0;
+				++i;
+			}
+			break;
+		case rotate:
+			if (counter < phaseCount )
+				motor = rotate;
+			else{
+				motor = ready;
+			}
+			break;
 	}
 
+
 	// Actions
-	switch(buttonState){
-		case buttonWait:
-		if (i == 18 && button == 0x02) {
-			button = 0x01;
-			i = 0;
-			} else if (i == 18 && button == 0x01) {
-			button = 0x02;
-			i = 0;
-		}
-		break;
-		case buttonGo:
-		if(direction == forward){
-			PORTC = stepOut[forCnt];
-			if(forCnt < 7)
-			forCnt++;
-			else
-			forCnt=0;
-		}
-		else if(direction == backward){
-			PORTC = stepOut[bckCnt];
-			if(bckCnt > 0)
-			bckCnt--;
-			else
-			bckCnt=7;
-		}
-		cnt++;
-		break;
+	switch(motor) {
+		case ready:
+			if (i == 6 && rotate == 0x02) {
+				rotate = 0x01;
+				i = 0;
+			} else if (i == 6 && rotate == 0x01) {
+				rotate = 0x02;
+				i = 0;
+			}
+			break;
+		case rotate:
+			if (route == clockwise) {
+				PORTA = steps[forwardCount];	//Perform the stepper motor pattern
+				if (forwardCount < 7)
+					forwardCount++;
+				else
+					forwardCount = 0;
+			} else if (route == counterClockwise) {
+				PORTA = steps[backwardCount];	//Perform the stepper motor pattern
+				if(backwardCount > 0)
+					backwardCount--;
+				else
+					backwardCount = 7;
+			}
+			counter++;
+			break;
 	}
 }
+
 
 void sendData() {
 	PORTB = 0x01;
@@ -227,7 +220,7 @@ void sendData() {
 	}
 	
 	if (USART_IsSendReady(0)) {
-		if (direction == forward) {
+		if (direction == clockwise) {
 			USART_Send(i * 10, 0);
 		} else {
 			USART_Send(180 - (i * 10), 0);
@@ -271,7 +264,7 @@ int main(void)
 	TimerSet(3);
 	TimerOn();
 	
-	buttonState = buttonWait;
+	motor = ready;
 	BTState = wait;
 	
 	//Counting variable for timing the 'tick' functions
