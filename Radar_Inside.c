@@ -19,10 +19,11 @@ unsigned char d1 = 0x00;
 unsigned char a1 = 0x00;
 unsigned char d2 = 0x00;
 unsigned char a2 = 0x00;
+unsigned char m = 0x00;
 char* data[10];
 
 //States for bluetooth communication
-enum BTStates{wait, distance1, angle1, distance2, angle2} BTState;
+enum BTStates{wait, distance1, angle1, distance2, angle2, motion} BTState;
 
 //Bluetooth communication state machine
 void BTTick() {
@@ -38,6 +39,8 @@ void BTTick() {
 			} else if (select == 104) {
 				BTState = angle2;
 			} else if (select == 105) {
+				BTState = motion;
+			} else if (select == 106) {
 				BTState = wait;
 			}
 			break;
@@ -69,6 +72,12 @@ void BTTick() {
 				BTState = wait;
 			}
 			break;
+		case motion:
+			if (select == 105) {
+				BTState = motion;
+			} else if (select != 105) {
+				BTState = wait;
+			}
 	}
 
 	// Actions
@@ -86,15 +95,17 @@ void BTTick() {
 				select = 103;
 			} else if (val == 104) {
 				select = 104;
-			} else {
+			} else if (val == 105) {
 				select = 105;
+			} else {
+				select = 106;
 			}
 			break;
 		case distance1:
 			if (USART_HasReceived(0)) {
 				d1 = USART_Receive(0);
 				USART_Flush(0);
-				select = 105;
+				select = 106;
 			}
 			itoa(d1, data, 10);
 			LCD_ClearScreen();
@@ -105,7 +116,7 @@ void BTTick() {
 			if (USART_HasReceived(0)) {
 				a1 = USART_Receive(0);
 				USART_Flush(0);
-				select = 105;
+				select = 106;
 			}
 			if ((a1 != 104) && (a1 != d2)) {
 				itoa(a1, data, 10);
@@ -118,7 +129,7 @@ void BTTick() {
 			if (USART_HasReceived(0)) {
 				d2 = USART_Receive(0);
 				USART_Flush(0);
-				select = 105;
+				select = 106;
 			}
 			itoa(d2, data, 10);
 			LCD_ClearScreen();
@@ -129,11 +140,22 @@ void BTTick() {
 			if (USART_HasReceived(0)) {
 				a2 = USART_Receive(0);
 				USART_Flush(0);
-				select = 105;
+				select = 106;
 			}
 			itoa(a2, data, 10);
 			LCD_ClearScreen();
 			LCD_DisplayString(1, "Angle 2:");
+			LCD_DisplayString(17, data);
+			break;
+		case motion:
+			if (USART_HasReceived(0)) {
+				m = USART_Receive(0);
+				USART_Flush(0);
+				select = 106;
+			}
+			itoa(m, data, 10);
+			LCD_ClearScreen();
+			LCD_DisplayString(1, "Motion: ");
 			LCD_DisplayString(17, data);
 			break;
 	}
@@ -154,7 +176,11 @@ int main(void)
 	LCD_init();
 	LCD_ClearScreen();
 	initUSART(0);
-	TimerSet(540);
+	//540 fine without PIR motion sensor
+	//600 find with PIR motion sensor
+	//620 is the best by far, only bug occurring every ~5 passes
+	//630 is even better than 620 with one bug occurring every ~20-25 passes
+	TimerSet(630);
 	TimerOn();
 	
 	BTState = wait;
