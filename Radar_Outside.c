@@ -7,6 +7,8 @@
 #include "lcd.h"
 #include "timer.h"
 #include "bit.h"
+
+//Library given in CS122A
 #include "usart_ATmega1284.h"
 
 //Global variables for ultrasonic sensor
@@ -268,30 +270,21 @@ int main(void)
 	TimerSet(3);
 	TimerOn();
 	
-	buttonState = buttonWait;
+	motor = ready;
+	route = clockwise;
 	BTState = wait;
 	
 	//Counting variable for timing the 'tick' functions
 	unsigned char motorCount = 0;
 	unsigned char btCount = 0;
 	
-	/* Testing LED (Put it in places of the code where you think the error lies)
-	PORTB = 0x01;
-	_delay_ms(1000);
-	PORTB = 0x00;
-	_delay_ms(1000); 
-	*/
-	unsigned char test = 0;	
-	
 	while (1) {
-		//Every ~250ms (now 75ms)
+		//Every ~75ms
 		if (motorCount == 17) {
 			BTTick();
 			getDistance();
-			//sendData();
 			motorCount = 0;
 		} else {
-			//sendData();
 			MotorTick();
 			++motorCount;
 			++btCount;
@@ -309,38 +302,10 @@ ISR(INT1_vect) {
 		TIMSK0 |= 1 << TOIE0;		//Enable overflow interrupts
 	}
 	else {
-		//PORTC = 0x01;				//Testing LED
 		TCCR0B = 0x00;				//Stop timer
 		TIMSK0 = 0x00;				//Disable overflow interrupts 
-		char* test[10];	
-		char* test2[10];			
 		distance = (timer0Counter * 255) + TCNT0; //Calculate distance
 		distance = distance / 920;				  //Convert to inches (Rough approximation)
-		
-		//unsigned receive = 0;
-		//if (USART_HasReceived(0)) {
-			//receive = USART_Receive(0);
-			//USART_Flush(0);
-		//}
-		//
-		//if ((receive == 0) || (receive == 2)) {
-			//if (USART_IsSendReady(0)) {
-				//USART_Send(distance, 0);
-				//while (!(USART_HasTransmitted(0))) {}
-			//}
-		//} else {		
-			//_delay_ms(2500);
-			
-			/*Works with bluetooth
-			//unsigned char input = PINA;
-			//if (USART_IsSendReady(0)) {
-				//USART_Send(distance, 0);
-				//while (!(USART_HasTransmitted(0))) {}
-			//}
-			Works with bluetooth*/
-			
-			//_delay_ms(2500);
-		//}
 	}
 	timer0Counter = 0x00;
 }
