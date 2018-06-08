@@ -3,6 +3,7 @@
 This class project is a device that keeps campers safe and alert when they are out at night. This device can show what is in the surroundings and alerts the user if something gets too close in the area.
 
 Note 1: The .c files used for the version 1 demo are **InsideComponent.c** and **OutsideComponent.c**
+
 Note 2: The .c files used for the version 2 demo are **Radar.c** and **Sensors.c**
 
 *File(s) developed in CS120B*
