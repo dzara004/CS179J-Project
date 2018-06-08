@@ -30,7 +30,7 @@ void LCDTick() {
 			state = display;
 			break;
 	}
-	
+
 	//Actions
 	switch(state) {
 		case display:
